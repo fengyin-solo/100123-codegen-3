@@ -23,11 +23,27 @@ def list_entries(
     page: int = 1,
     size: int = 20,
 ) -> PageResult[dict]:
-    """按传感器编号与状态过滤温感器管理列表；没有数据时返回空页，不报错。"""
+    """按传感器编号与状态过滤温感器管理列表；没有数据时返回空页，不报错。
+
+    返回的每条记录都会按校准口径给出「校准结论」，与详情接口同口径。
+    """
     if size > 200:
         raise HTTPException(status_code=400, detail="每页最多 200 条，请缩小分页范围")
     items, total = service.list_entries(keyword=keyword, status=status, page=page, size=size)
     return PageResult(items=items, total=total, page=page, size=size)
+
+
+@router.get("/summary")
+def summary() -> dict[str, Any]:
+    """校准口径汇总：各状态传感器数量与精度拦截数量，供台账看板提示。"""
+    return service.summary()
+
+
+@router.get("/export")
+def export_entries() -> dict[str, Any]:
+    """导出温感器管理清单：返回当前全量数据（含校准结论）。"""
+    items, total = service.list_entries(page=1, size=10000)
+    return {"module": "sensor", "total": total, "items": items}
 
 
 @router.get("/{entry_id}", response_model=dict)
@@ -41,10 +57,14 @@ def get_entry(entry_id: int) -> dict:
 
 @router.post("", response_model=ActionResult)
 def create_entry(payload: EntryPayload) -> ActionResult:
-    """登记一条温度传感器，缺字段时说明原因而不是静默丢弃。"""
-    entry, missing = service.create_entry(payload.values)
-    if missing:
-        return ActionResult(ok=False, message=f"缺少必填字段：{'、'.join(missing)}")
+    """登记一条温度传感器。
+
+    校准日期晚于下次校准日、精度等级不符在用要求的数据不允许保存，
+    并逐条说明原因。
+    """
+    entry, errors = service.create_entry(payload.values)
+    if errors:
+        return ActionResult(ok=False, message="；".join(errors))
     return ActionResult(ok=True, message="温度传感器已登记", entry=entry)
 
 
@@ -56,10 +76,3 @@ def run_action(entry_id: int, payload: EntryPayload) -> ActionResult:
     if entry is None:
         return ActionResult(ok=False, message=message)
     return ActionResult(ok=True, message=message, entry=entry)
-
-
-@router.get("/export")
-def export_entries() -> dict[str, Any]:
-    """导出温感器管理清单：返回当前过滤条件下的全量数据。"""
-    items, total = service.list_entries(page=1, size=10000)
-    return {"module": "sensor", "total": total, "items": items}
