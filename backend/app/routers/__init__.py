@@ -19,6 +19,7 @@ from app.routers import refriger as router_refriger
 from app.routers import box as router_box
 from app.routers import route as router_route
 from app.routers import sensor as router_sensor
+from app.routers import calibration as router_calibration
 from app.routers import cost as router_cost
 from app.routers import client2 as router_client2
 from app.routers import checkin as router_checkin
@@ -27,4 +28,4 @@ from app.routers import roadcheck as router_roadcheck
 from app.routers import clean2 as router_clean2
 from app.routers import contract2 as router_contract2
 
-ROUTERS = [router_fleet, router_driver, router_order, router_dispatch3, router_temp, router_door, router_returntrip, router_abnormal2, router_renew, router_refriger, router_box, router_route, router_sensor, router_cost, router_client2, router_checkin, router_accident, router_roadcheck, router_clean2, router_contract2]
+ROUTERS = [router_fleet, router_driver, router_order, router_dispatch3, router_temp, router_door, router_returntrip, router_abnormal2, router_renew, router_refriger, router_box, router_route, router_sensor, router_calibration, router_cost, router_client2, router_checkin, router_accident, router_roadcheck, router_clean2, router_contract2]

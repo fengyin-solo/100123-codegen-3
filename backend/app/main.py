@@ -5,14 +5,25 @@
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import ROUTERS
+from app.services.sensor import SensorService
 from app.store import store
 
-app = FastAPI(title="冷链物流运输管理平台", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """规则上线：既有传感器数据按新校准口径在启动时统一重新标一遍（幂等）。"""
+    SensorService().reconcile_all()
+    yield
+
+
+app = FastAPI(title="冷链物流运输管理平台", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
